@@ -1,7 +1,8 @@
 import random
 import math
 import numpy as np
-
+import warnings
+warnings.filterwarnings("error")
 
 class Chromosome:
     """
@@ -11,7 +12,7 @@ class Chromosome:
         """
         Constructor for Chromosome class
         @param: depth - tree depth
-        @param: method - method to generate the tree, dfault is full
+        @param: method - method to generate the tree, default is full
         @param: terminal_set - set of terminals
         @param: funct_set - set of functions
         """
@@ -22,7 +23,7 @@ class Chromosome:
         self.fitness = None
         if method == 'grow':
             self.grow()
-        else:
+        elif method == 'full':
             self.full()
 
     def full(self, level = 0):
@@ -65,7 +66,7 @@ class Chromosome:
                 val = random.choice(self.terminal_set)
                 self.gen.append(val)
         
-    def evaluate(self, input, poz = 0):
+    def eval(self, input, poz = 0):
         """
         Function to evaluate the current chromosome with a given input
         @param: input - function input (x0, x1... xn)
@@ -76,8 +77,8 @@ class Chromosome:
             return input[int(self.gen[poz][1:])], poz
         elif self.gen[poz] in self.func_set[2]:
             poz_op = poz
-            left, poz = self.evaluate(input, poz + 1)
-            right, poz = self.evaluate(input, poz + 1)
+            left, poz = self.eval(input, poz + 1)
+            right, poz = self.eval(input, poz + 1)
             if self.gen[poz_op] == '+':
                 return left + right, poz
             elif self.gen[poz_op] == '-':
@@ -90,7 +91,7 @@ class Chromosome:
                 return left / right, poz
         else:
             poz_op = poz
-            left, poz = self.evaluate(input, poz + 1)
+            left, poz = self.eval(input, poz + 1)
             if self.gen[poz_op] == 'sin':
                 return np.sin(left), poz
             elif self.gen[poz_op] == 'cos':
@@ -98,14 +99,24 @@ class Chromosome:
             elif self.gen[poz_op] == 'ln':
                 return np.log(left), poz
             elif self.gen[poz_op] == 'sqrt':
-                return math.sqrt(left), poz
+                return np.sqrt(left), poz
+            elif self.gen[poz_op] == 'tg':
+                return np.tan(left), poz
+            elif self.gen[poz_op] == 'ctg':
+                return 1/np.tan(left), poz
+            elif self.gen[poz_op] == 'e':
+                return np.exp(left), poz
+            elif self.gen[poz_op] == 'tanh':
+                return np.tanh(left), poz
+            elif self.gen[poz_op] == 'abs':
+                return abs(left), poz
 
     def evaluate_arg(self, input):
         """
         Function to evaluate the current genotype to a given input
         @return: the value of self.gen evaluated at the given input
         """
-        return self.evaluate[0]
+        return self.eval(input)[0]
 
     def calculate_fitness(self, inputs, outputs):
         """
@@ -116,9 +127,41 @@ class Chromosome:
         """
         diff = 0
         for i in range(len(inputs)):
-            diff += (self.evaluate(input)[0] - outputs[i][0])**2
+            try:
+                diff += (self.eval(inputs[i])[0] - outputs[i][0])**2
+            except RuntimeWarning:
+                self.gen = []
+                if random.random() > 0.5:
+                    self.grow()
+                else:
+                    self.full()
+                self.calculate_fitness(inputs, outputs)
         
         if len(inputs) == 0:
             return 1e9
         self.fitness = diff/(len(inputs))
         return self.fitness
+
+    def __get_depth_aux(self, poz = 0):
+        """
+        Function to get the depth of a chromosome
+        @return: chromosome's depth, last pos
+        """
+        elem = self.gen[poz]
+        
+        if elem in self.func_set[2]:
+            left, poz = self.__get_depth_aux(poz + 1)
+            right, poz = self.__get_depth_aux(poz)
+
+            return 1 + max(left, right), poz
+        elif elem in self.func_set[1]:
+            left, poz = self.__get_depth_aux(poz + 1)
+            return left + 1, poz
+        else:
+            return 1, poz + 1
+    def get_depth(self):
+        """
+        Function to get the depth of a chromosome
+        @return: - chromosome's depth
+        """
+        return self.__get_depth_aux()[0] - 1
