@@ -60,8 +60,8 @@ def cross_over(mother, father, max_depth):
     end_m = traversal(start_m, mother)
     end_f = traversal(start_f, father)
     child.gen = mother.gen[:start_m] + father.gen[start_f : end_f] + mother.gen[end_m :]
-    #if child.get_depth() > max_depth and random.random() > 0.2:
-    #    child = Chromosome(mother.terminal_set, mother.func_set, mother.depth)
+    if child.get_depth() > max_depth and random.random() > 0.2:
+        child = Chromosome(mother.terminal_set, mother.func_set, mother.depth)
     return child
 
 
