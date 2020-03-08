@@ -1,4 +1,5 @@
 # Genetic-Programming-Function-Approximation
-Python framework to approximate various functions.
+Function approximation using genetic programming
 
-[For a demo.](/PredictionDemo.ipynb)
+
+[Link to demo notebook.](/PredictionDemo.ipynb)
